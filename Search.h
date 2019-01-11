@@ -1,83 +1,28 @@
-//Header file for Search Algorithms and their dependencies
+//Header file for Search Algorithms and Search Problems
 #ifndef SEARCH_H_
 #define SEARCH_H_
 
-#include <vector>
-#include <string>
 #include <map>
-//a pair representing Position at a matrix.
-struct Position
-{
-	unsigned int i;
-	unsigned int j;
-};
-typedef struct Position Position;
-/*
- * Node class which is mainly adjusted to out Matrix Graphs, but can be also used for other kinds of graphs with slight modification.
- * for example, one can use the adjency vector of a Node to get all of the edges coming from it and construct an edge set, thus using this object
- * for other search problems...
- */
-class Node
-{
-	Position pos;
-	double cost;
-	double algCost;
-	double heuristicCost;
-	std::vector<Node*> adj;
-	Node* cameFrom;
-
-	public:
-		Node(unsigned int i, unsigned int j, double c);
-		virtual void addAdjNode(Node* n);
-		virtual Position getPosition();
-		virtual double getCost();
-		virtual double getAlgCost();
-		virtual double getHCost();
-		virtual void setAlgCost(double ac);
-		virtual void setHCost(double hc);
-		virtual void setCameFrom(Node* n);
-		virtual Node* getCameFrom();
-		virtual std::vector<Node*> getAdj();
-		virtual bool equals(Node* n);
-		virtual std::string toString();
-		virtual std::string pathFromStart();
-		virtual ~Node(){};
-};
+#include <vector>
 //Searchable interface, each Node should be given unique string representation to be held in a map, for running time purposes...
+template<typename K, typename T> //T - State type, K - key for State
 class Searchable
-{
+{	//if one wishes to use this interface, he must Hash the K object if it is not primitive or language standard...
 	public:
-		virtual Node* getInitialState() = 0;
-		virtual Node* getGoalState() = 0;
-		virtual std::map<std::string, Node*>* getAll() = 0;
+		virtual T getInitialState() = 0;
+		virtual T getGoalState() = 0;
+		virtual std::map<K, T>* getAll() = 0;
+		virtual std::vector<T> getAdj(T) = 0;
 		virtual ~Searchable(){};
 };
 //Searcher abstract class
-template<typename S>
+template<typename S, typename T, typename K>
 class Searcher
 {
-	unsigned int visits;
-
 	public:
-		virtual S search(Searchable* searchable) = 0;
-		virtual unsigned int getNumOfVisits() { return this->visits; }
+		virtual S search(Searchable<K, T>* searchable) = 0;
+		virtual unsigned int getNumOfVisits() = 0;
 		virtual ~Searcher(){};
-};
-//the Searchable we'll use at our implementation
-class MatrixGraph : public Searchable
-{
-	std::map<std::string, Node*> nodes;
-	Node* start;
-	Node* goal;
-
-	virtual void initNodes(double** costs, unsigned int size);
-
-	public:
-		MatrixGraph(Position start, Position goal, double** costs, unsigned int size);
-		virtual Node* getInitialState();
-		virtual Node* getGoalState();
-		virtual std::map<std::string ,Node*>* getAll();
-		virtual ~MatrixGraph();
 };
 
 #endif

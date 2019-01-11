@@ -1,5 +1,5 @@
 //MatrixGraph Implementation
-#include "Search.h"
+#include "MySearch.h"
 //build Nodes and Node map
 void MatrixGraph :: initNodes(double** costs, unsigned int size)
 {
@@ -37,11 +37,6 @@ void MatrixGraph :: initNodes(double** costs, unsigned int size)
 		{
 			n->addAdjNode((this->nodes).at("(" + std::to_string(i) + "," + std::to_string(j - 1) + ")"));
 		}
-		//up and left (checking if i,j are positive, thus moving doesn't take us out of bounds and of course if there's a Node...)
-		if (i && j && ((this->nodes).find("(" + std::to_string(i - 1) + "," + std::to_string(j - 1) + ")") != (this->nodes).end()))
-		{
-			n->addAdjNode((this->nodes).at("(" + std::to_string(i - 1) + "," + std::to_string(j - 1) + ")"));
-		}
 		//right (checking if i is less than maxIndex, thus going right doesn't take us out of bounds and of course if there's a Node...)
 		if (i < mInd && ((this->nodes).find("(" + std::to_string(i + 1) + "," + std::to_string(j) + ")") != (this->nodes).end()))
 		{
@@ -52,21 +47,6 @@ void MatrixGraph :: initNodes(double** costs, unsigned int size)
 		{
 			n->addAdjNode((this->nodes).at("(" + std::to_string(i) + "," + std::to_string(j + 1) + ")"));
 		}
-		//down and right (checking if i,j are < size - 1, thus moving doesn't take us out of bounds and of course if there's a Node...)
-		if (i < mInd && j < mInd && ((this->nodes).find("(" + std::to_string(i + 1) + "," + std::to_string(j + 1) + ")") != (this->nodes).end()))
-		{
-			n->addAdjNode((this->nodes).at("(" + std::to_string(i + 1) + "," + std::to_string(j + 1) + ")"));
-		}
-		//up and right (checking if i,j are valid, thus moving doesn't take us out of bounds and of course if there's a Node...)
-		if (i < mInd && j && ((this->nodes).find("(" + std::to_string(i + 1) + "," + std::to_string(j - 1) + ")") != (this->nodes).end()))
-		{
-			n->addAdjNode((this->nodes).at("(" + std::to_string(i + 1) + "," + std::to_string(j - 1) + ")"));
-		}
-		//down and left (checking if i,j are valid, thus moving doesn't take us out of bounds and of course if there's a Node...)
-		if (i && j < mInd && ((this->nodes).find("(" + std::to_string(i - 1) + "," + std::to_string(j + 1) + ")") != (this->nodes).end()))
-		{
-			n->addAdjNode((this->nodes).at("(" + std::to_string(i - 1) + "," + std::to_string(j + 1) + ")"));
-		}
 	}
 }
 //constructor
@@ -76,22 +56,27 @@ MatrixGraph :: MatrixGraph(Position start, Position goal, double** costs, unsign
 	this->start = (this->nodes)["(" + std::to_string(start.i) + "," + std::to_string(start.j) + ")"];
 	this->goal = (this->nodes)["(" + std::to_string(goal.i) + "," + std::to_string(goal.j) + ")"];
 }
-
+//returns start Node
 Node* MatrixGraph :: getInitialState()
 {
 	return this->start;
 }
-
+//returns goal Node
 Node* MatrixGraph :: getGoalState()
 {
 	return this->goal;
 }
-
+//returns a pointer to the map (will be used to set heuristics for example...)
 std::map<std::string, Node*>* MatrixGraph :: getAll()
 {
 	return &(this->nodes);
 }
-
+//returns inputed Node's all adjacent Nodes
+std::vector<Node*> MatrixGraph :: getAdj(Node* n)
+{
+	return n->getAdj();
+}
+//destructor
 MatrixGraph :: ~MatrixGraph()
 {
 	std::map<std::string, Node*>:: iterator it;

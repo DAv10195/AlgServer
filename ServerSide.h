@@ -11,7 +11,7 @@ namespace ServerSide
 	class Solver
 	{
 		public:
-			virtual S solve(const P &problem) = 0;
+			virtual S solve(P &problem) = 0;
 			virtual ~Solver(){};
 	};
 	//CacheManager abstract class, L - where to load solutions from (a file stream for example...)
@@ -28,11 +28,11 @@ namespace ServerSide
 		public:
 			virtual void loadSolutions() = 0;
 			virtual void saveSolutions() = 0;
-			virtual void addSolution(const P &problem, const S &solution)
+			virtual void addSolution(P &problem, S &solution)
 			{
 				this->solutions[problem] = solution;
 			}
-			virtual bool ifExistingSolution(const P &problem)
+			virtual bool ifExistingSolution(P &problem)
 			{	//case no solution cached...
 				if ((this->solutions)->find(problem) == (this->solutions)->end())
 				{
@@ -41,7 +41,7 @@ namespace ServerSide
 				//solution was already cached...
 				return true;
 			}
-			virtual S getSolution(const P &problem)
+			virtual S getSolution(P &problem)
 			{	//if for some obscure reason a dumb programmer didn't check for existence before usage...
 				if (!this->ifExistingSolution(problem))
 				{
@@ -52,7 +52,7 @@ namespace ServerSide
 			}
 			virtual ~CacheManager(){};
 	};
-	//the two following interfaces are streams for handling sockets
+	//the two following abstract classes are streams for handling sockets
 	template<typename S>
 	class SockOutStream
 	{
@@ -60,7 +60,7 @@ namespace ServerSide
 
 		public:
 			SockOutStream(int s) { this->sock = s; };
-			virtual bool operator<<(const S &solution) = 0;
+			virtual bool write(const S &solution) = 0;
 			virtual ~SockOutStream(){};
 	};
 	template<typename P>
@@ -70,7 +70,7 @@ namespace ServerSide
 
 		public:
 			SockInStream(int s) { this->sock = s; };
-			virtual bool operator>>(P &problem) = 0;
+			virtual bool read(P &problem) = 0;
 			virtual ~SockInStream(){};
 	};
 	//ClientHandler interface
@@ -89,4 +89,5 @@ namespace ServerSide
 			virtual ~Server(){};
 	};
 }
+
 #endif

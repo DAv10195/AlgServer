@@ -1,15 +1,32 @@
 //Node implementation
-#include "Search.h"
+#include "MySearch.h"
 #include <limits>
-//constructor
-Node :: Node(unsigned int i, unsigned int j, double c)
+//basic constructor
+Node :: Node()
 {
-	(this->pos).i = i;
-	(this->pos).j = j;
-	this->cost = c;
+	(this->pos).i = 0;
+	(this->pos).j = 0;
+	this->cost = 0;
 	this->algCost = std::numeric_limits<double>::infinity();
 	this->heuristicCost = 0;
 	this->cameFrom = nullptr;
+	this->cameFromDir = "";
+}
+//position constructor (mainly for matrix graphs...
+Node :: Node(unsigned int i, unsigned int j) : Node()
+{
+	(this->pos).i = i;
+	(this->pos).j = j;
+}
+//position and cost constructor (mainly for matrix graphs...)
+Node :: Node(unsigned int i, unsigned int j, double c) : Node(i, j)
+{
+	this->cost = c;
+}
+//heuristic constructor (mainly for matrix graphs using heuristic algorithms...)
+Node :: Node(unsigned int i, unsigned int j, double c, double hc) : Node(i, j, c)
+{
+	this->heuristicCost = hc;
 }
 //add adjacent Node
 void Node :: addAdjNode(Node* n)
@@ -50,11 +67,37 @@ void Node :: setHCost(double hc)
 void Node :: setCameFrom(Node* n)
 {
 	this->cameFrom = n;
+	Position pos = n->getPosition();
+	unsigned int nI = pos.i, nJ = pos.j, thisI = (this->pos).i, thisJ = (this->pos).j;
+	//right
+	if (nI < thisI)
+	{
+		this->cameFromDir = "Right";
+	}
+	//left
+	if (nI > thisI)
+	{
+		this->cameFromDir = "Left";
+	}
+	//down
+	if (nJ < thisJ)
+	{
+		this->cameFromDir = "Down";
+	}
+	//up
+	if (nJ > thisJ)
+	{
+		this->cameFromDir = "Up";
+	}
 }
 //get the prev Node
 Node* Node :: getCameFrom()
 {
 	return this->cameFrom;
+}
+std::string Node :: getCameFromDir()
+{
+	return this->cameFromDir;
 }
 //get all adjacent Nodes
 std::vector<Node*> Node :: getAdj()
@@ -86,29 +129,33 @@ std::string Node :: pathFromStart()
 	std::string toRet = "";
 	Node* curr = this->cameFrom;
 	unsigned int i = 0;
-	std::vector<std::string> nodesInPath;
+	std::vector<std::string> path;
 	//case no path or method called before running a search algorithm
 	if (curr == nullptr)
 	{
 		return toRet;
 	}
-	nodesInPath.push_back(this->toString());
+	path.push_back(this->cameFromDir);
 	//reaching nullptr means we backtraced all the way to the start Node
 	while (curr != nullptr)
 	{
-		nodesInPath.push_back(curr->toString());
+		path.push_back(curr->getCameFromDir());
 		curr = curr->getCameFrom();
 	}
 	//constructing a string representation of the path
-	i = nodesInPath.size() - 1;
+	i = path.size() - 1;
 	for (; i >= 0; --i)
 	{
-		toRet += nodesInPath[i];
+		toRet += path[i];
 		if (!i)
 		{
 			break;
 		}
-		toRet+= "->";
+		if (i == path.size() - 1)
+		{
+			continue;
+		}
+		toRet+= ",";
 	}
 	return toRet;
 }
