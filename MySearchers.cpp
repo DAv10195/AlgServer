@@ -1,8 +1,9 @@
 //implementation of our four search algorithms
 #include "MySearch.h"
 #include <unordered_map>
-#include <queue>
 #include <unordered_set>
+#include <queue>
+#include <stack>
 #include <algorithm>
 using std::priority_queue;
 using std::vector;
@@ -96,6 +97,7 @@ std::string MyBestFirstSearch :: search(Searchable<std::string, Node*>* mg)
     return NOTFOUND;
 }
 
+//find a path using BFS algorithm.
 
 std::string MyBFS :: search(Searchable<std::string, Node*>* mg)
 {
@@ -129,29 +131,102 @@ std::string MyBFS :: search(Searchable<std::string, Node*>* mg)
 }
 
 
+//find a path using DFS algorithm.
 std::string MyDFS :: search(Searchable<std::string, Node*>* mg)
 {
-    std::unordered_set <Node*> black;
-    std::unordered_set <Node*> grey;
-    Node* current = mg->getInitialState();
-    grey.insert(current);
-    if (current == mg->getGoalState())
-    { //case we find our node.
-        return current->pathFromStart();
-    }
-    vector<Node*> adj = mg->getAdj(current); //extract neighbors.
-    for (Node* son : adj)
-    {
-    	if (grey.find(son) == grey.end() && !(black.find(son) == black.end()))
-    	{
-    		this->increaseNumOfVisits();
-    		son->setCameFrom(current);
-
-    		//this->search(mg);
-
-    	}
-        black.insert(current);
-    }
-    return NOTFOUND;
+	Node* start = mg->getInitialState();
+	start->setAlgCost(STARTVAL);
+	recDFS(mg,start);
+	std::string answer = mg->getGoalState()->pathFromStart();
+	if (answer == "") //if path was not found (we didnt reach the target node).
+	{
+		return NOTFOUND;
+	}
+	return answer;
 }
+// the recursive function.
+void  MyDFS :: recDFS(Searchable<std::string, Node*>* mg, Node* currentNode)
+{
+	//visit every son node recursively.
+	this->increaseNumOfVisits();
+	currentNode->setIsVisited();
+	vector<Node*> adj = mg->getAdj(currentNode); //extract neighbors.
+	for (Node* son : adj) //iterate over the neighbors.
+	{
+		if (!(son->getIsVisted()))
+		{
+			//calculate the path.
+			double distance = currentNode->getAlgCost() + son->getCost();
+			son->setAlgCost(distance); //set the cost.
+			son->setCameFrom(currentNode); //set the previous node for restoration.
+			this->recDFS(mg,son); //repeat recursively until reaching the end node.
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//std::string MyDFS :: search(Searchable<std::string, Node*>* mg)
+//{
+//	std::stack<Node*> stack;
+//	std::unordered_set <Node*> visited;
+//	stack.push(mg->getInitialState());
+//	while (stack.size() > 0)
+//	{
+//		Node* node = stack.top();
+//		if (node == mg->getGoalState())
+//		{
+//			return node->pathFromStart();
+//		}
+//		stack.pop();
+//		if (visited.find(node) == visited.end())
+//		{
+//			visited.insert(node);
+//			vector<Node*> adj = mg->getAdj(node);
+//			for (Node* son : adj)
+//			{
+//				son->setCameFrom(node);
+//				stack.push(son);
+//			}
+//		}
+//	}
+//	return NOTFOUND;
+//}
+
 

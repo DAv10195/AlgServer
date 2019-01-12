@@ -66,10 +66,7 @@ Node* MatrixGraph :: getGoalState()
 {
 	return this->goal;
 }
-void MatrixGraph :: setInitialState(Node* init)
-{
-	this->start = init;
-}
+
 //returns a pointer to the map (will be used to set heuristics for example...)
 std::map<std::string, Node*>* MatrixGraph :: getAll()
 {

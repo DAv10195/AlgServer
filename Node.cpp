@@ -11,6 +11,7 @@ Node :: Node()
 	this->heuristicCost = 0;
 	this->cameFrom = nullptr;
 	this->cameFromDir = "";
+	this->isVisited = false;
 }
 //position constructor (mainly for matrix graphs...
 Node :: Node(unsigned int i, unsigned int j) : Node()

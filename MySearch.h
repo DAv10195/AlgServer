@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include <queue>
+#include <unordered_map>
+#include <unordered_set>
 using std::priority_queue;
 //a pair representing Position at a matrix.
 struct Position
@@ -24,6 +26,7 @@ class Node
 	std::vector<Node*> adj;
 	Node* cameFrom;
 	std::string cameFromDir;
+	bool isVisited;
 
 	public:
 		Node();
@@ -44,6 +47,8 @@ class Node
 		virtual bool equals(Node* n);
 		virtual std::string toString();
 		virtual std::string pathFromStart();
+		virtual void  setIsVisited() { this->isVisited = true; }
+		virtual bool  getIsVisted() { return this->isVisited; }
 		virtual ~Node(){};
 };
 //the Searchable we'll use at our implementation
@@ -61,7 +66,6 @@ class MatrixGraph : public Searchable<std::string ,Node*>
 		virtual Node* getGoalState();
 		virtual std::map<std::string ,Node*>* getAll();
 		virtual std::vector<Node*> getAdj(Node* n);
-		virtual void setInitialState(Node* init);
 		virtual ~MatrixGraph();
 };
 
@@ -85,9 +89,11 @@ class MyPriorQueue : public priority_queue <Node* ,std::vector<Node*>, MyCmp>
 class MyBFS : public Searcher<std::string, Node*, std::string>
 {
 	unsigned int visits;
+
+	virtual void increaseNumOfVisits(){ ++(this->visits); }
+
 	public:
 		MyBFS(){ this->visits = 0; };
-		virtual void increaseNumOfVisits(){ ++(this->visits); }
 		virtual std::string search(Searchable<std::string, Node*>* mg);
 		virtual unsigned int getNumOfVisits() { return this->visits; };
 		virtual ~MyBFS(){};
@@ -96,10 +102,16 @@ class MyBFS : public Searcher<std::string, Node*, std::string>
 class MyDFS : public Searcher<std::string, Node*, std::string>
 {
 	unsigned int visits;
+    std::unordered_set <Node*> black;
+    std::unordered_set <Node*> grey;
+
+	virtual void increaseNumOfVisits(){ ++(this->visits); }
+	virtual std::unordered_set<Node*>* getBlack(){ return &(this->black) ;};
+	virtual std::unordered_set<Node*>* getGrey(){ return &(this->grey);};
+	virtual void recDFS(Searchable<std::string, Node*>* mg, Node* currentNode);
 
 	public:
-		MyDFS();
-		virtual void increaseNumOfVisits(){ ++(this->visits); }
+		MyDFS(){ this->visits = 0; };
 		virtual std::string search(Searchable<std::string, Node*>* mg);
 		virtual unsigned int getNumOfVisits() { return this->visits; };
 		virtual ~MyDFS(){};
@@ -111,19 +123,18 @@ class MyBestFirstSearch : public Searcher<std::string, Node*, std::string>
 	MyPriorQueue queue;
 	unsigned int visits;
 
+	virtual void increaseNumOfVisits(){ ++(this->visits); }
+	virtual void addToQueue(Node* node);
+	virtual int getQueueSize();
+	virtual void removeFromQueue(Node * node);
+	virtual bool isContain(Node * node);
+	virtual Node* extractMin();
+
 	public:
 		MyBestFirstSearch(){ this->visits = 0; };
 		virtual std::string search(Searchable<std::string, Node*>* mg);
 		virtual unsigned int getNumOfVisits() { return this->visits; };
-		virtual void increaseNumOfVisits(){ ++(this->visits); }
 		virtual ~MyBestFirstSearch(){};
-
-	private:
-		virtual void addToQueue(Node* node);
-		virtual int getQueueSize();
-		virtual void removeFromQueue(Node * node);
-		virtual bool isContain(Node * node);
-		virtual Node* extractMin();
 };
 
 class MyAstar : public Searcher<std::string, Node*, std::string>
