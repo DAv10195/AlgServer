@@ -22,19 +22,23 @@ namespace ServerSide
 		 * in case you wish to use a type which isn't a standard one (primitives, pointers, language standard objects, etc..)
 		 * you should Hash the key object you want to use via your own Hash function, and insert the Hashed object as a key
 		 */
-		std::map<P, S> solutions;
-		L toLoadFrom;
+		protected:
+			std::map<P, S> solutions;
+			L toLoadAndSaveFrom;
 
 		public:
 			virtual void loadSolutions() = 0;
 			virtual void saveSolutions() = 0;
 			virtual void addSolution(P &problem, S &solution)
 			{
-				this->solutions[problem] = solution;
+				if ((this->solutions).find(problem) == (this->solutions).end())
+				{	//only unsolved problems will be added...
+					this->solutions[problem] = solution;
+				}
 			}
 			virtual bool ifExistingSolution(P &problem)
 			{	//case no solution cached...
-				if ((this->solutions)->find(problem) == (this->solutions)->end())
+				if ((this->solutions).find(problem) == (this->solutions).end())
 				{
 					return false;
 				}
@@ -52,33 +56,11 @@ namespace ServerSide
 			}
 			virtual ~CacheManager(){};
 	};
-	//the two following abstract classes are streams for handling sockets
-	template<typename S>
-	class SockOutStream
-	{
-		int sock;
-
-		public:
-			SockOutStream(int s) { this->sock = s; };
-			virtual bool write(const S &solution) = 0;
-			virtual ~SockOutStream(){};
-	};
-	template<typename P>
-	class SockInStream
-	{
-		int sock;
-
-		public:
-			SockInStream(int s) { this->sock = s; };
-			virtual bool read(P &problem) = 0;
-			virtual ~SockInStream(){};
-	};
 	//ClientHandler interface
 	class ClientHandler
 	{
 		public:
-			template<typename P>
-			virtual void handleClients(SockInStream<P>* stream) = 0;
+			virtual void handleClients() = 0;
 			virtual ~ClientHandler(){};
 	};
 	//Server interface
@@ -86,6 +68,7 @@ namespace ServerSide
 	{
 		public:
 			virtual bool open(int port, ClientHandler* ch) = 0;
+			virtual void stop() = 0;
 			virtual ~Server(){};
 	};
 }
