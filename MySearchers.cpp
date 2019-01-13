@@ -5,30 +5,13 @@
 #include <queue>
 #include <stack>
 #include <algorithm>
+#include <cmath>
 using std::priority_queue;
 using std::vector;
 using std::greater;
 #define STARTVAL 0
 #define NOTFOUND "-1"
 
-//helper functions for BestFirstSearch.
- void MyBestFirstSearch:: addToQueue(Node* node)
-{
-    this->queue.push(node);
-}
- int MyBestFirstSearch:: getQueueSize()
-{
-    return this->queue.size();
-}
- void MyBestFirstSearch:: removeFromQueue(Node* node)
-{
-    this->queue.remove(node);
-}
- bool MyBestFirstSearch:: isContain(Node* node)
-{
-	 //return false if node is not in the queue.
-    return this->queue.contain(node);
-}
 
 bool MyPriorQueue::contain(Node* node)
 {
@@ -47,7 +30,12 @@ void MyPriorQueue::remove(Node* nodeToRemove) {
 
 Node* MyBestFirstSearch:: extractMin()
 { //takes out the best node from the graph, in our case the node with the best cost.
-	this->increaseNumOfVisits();
+	Node* toPop = this->queue.top();
+	this->queue.pop();
+	return toPop;
+ }
+Node* MyAstar:: extractMin()
+{ //takes out the best node from the graph, in our case the node with the best cost.
 	Node* toPop = this->queue.top();
 	this->queue.pop();
 	return toPop;
@@ -65,6 +53,7 @@ std::string MyBestFirstSearch :: search(Searchable<std::string, Node*>* mg)
     while (this->getQueueSize() > 0) //continue until there is no nodes left,we will check all the nodes eventually.
     {
     	Node * current = this->extractMin();
+    	this->visits++;
         closedMap.insert(current);
         if (current == mg->getGoalState())
         { //case we find our node.
@@ -109,7 +98,7 @@ std::string MyBFS :: search(Searchable<std::string, Node*>* mg)
     while (!queue.empty())
     {
     	Node * current = queue.front();
-    	this->increaseNumOfVisits();
+    	this->visits++;
     	queue.pop();
         if (current == mg->getGoalState())
         { //case we find our node.
@@ -144,11 +133,13 @@ std::string MyDFS :: search(Searchable<std::string, Node*>* mg)
 	}
 	return answer;
 }
+
+
 // the recursive function.
 void  MyDFS :: recDFS(Searchable<std::string, Node*>* mg, Node* currentNode)
 {
 	//visit every son node recursively.
-	this->increaseNumOfVisits();
+	this->visits++;
 	currentNode->setIsVisited();
 	vector<Node*> adj = mg->getAdj(currentNode); //extract neighbors.
 	for (Node* son : adj) //iterate over the neighbors.
@@ -164,69 +155,74 @@ void  MyDFS :: recDFS(Searchable<std::string, Node*>* mg, Node* currentNode)
 	}
 }
 
+std::string MyAstar:: search(Searchable<std::string, Node*>* mg)
+{
+	this->setHeuristic(mg);
+	//we use set to mark our used Nodes.
+    std::unordered_set <Node*> closedMap;
+    Node* start = mg->getInitialState();
+    //set the source destination.
+    start->setAlgCost(STARTVAL);
+    this->addToQueue(start);
+    while (this->getQueue().size() > 0) //continue until there is no nodes left,we will check all the nodes eventually.
+    {
+    	Node * current = this->extractMin();
+    	this->visits++;
+        closedMap.insert(current);
+        if (current == mg->getGoalState())
+        { //case we find our node.
+            return current->pathFromStart();
+        }
+        vector<Node*> adj = mg->getAdj(current); //extract neighbors.
+        for (Node* son : adj)
+        {
+        	double distance = current->getAlgCost() + son->getCost() + son->getHCost();
+        	//check if not in the queue and not handled.
+            if ((closedMap.find(son) == (closedMap.end())) && !(this->isContain(son)))
+            {
+            	//set the path and the previous node in this path.
+                son->setAlgCost(distance);
+                son->setCameFrom(current);
+                this->addToQueue(son);
+            }
+            else if(distance < son->getAlgCost()) {
+                if (!this->isContain(son)) { //check if the queue contains the node.
+                    this->addToQueue(son);
+                } else {
+                    son->setAlgCost(distance);
+                    this->removeFromQueue(son);
+                    //when node enters to priority queue it updates the heap
+                    this->addToQueue(son);
+                }
+            }
+        }
+    }
+
+    return NOTFOUND;
 
 
+}
+//preprocess the nodes with their heuristic cost.
+void MyAstar:: setHeuristic(Searchable<std::string, Node*>* mg)
+{
+	//we evaluate the heuristic function with a sort of euqlidic distance.
+	Node* temp = nullptr, * goal = nullptr;
+	goal = mg->getGoalState();
+	std::map<std::string, Node*> mapOfNodes = *(mg->getAll());
+	std::map<std::string, Node*> :: iterator it;
+	for (it = mapOfNodes.begin(); it != mapOfNodes.end(); ++it)
+	{
+		temp = it->second;
+		double minX = std::min (temp->getPosition().i , goal->getPosition().i);
+		double maxX = std::max (temp->getPosition().i , goal->getPosition().i);
+		double minY = std::min (temp->getPosition().j , goal->getPosition().j);
+		double maxY = std::max (temp->getPosition().j , goal->getPosition().j);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//std::string MyDFS :: search(Searchable<std::string, Node*>* mg)
-//{
-//	std::stack<Node*> stack;
-//	std::unordered_set <Node*> visited;
-//	stack.push(mg->getInitialState());
-//	while (stack.size() > 0)
-//	{
-//		Node* node = stack.top();
-//		if (node == mg->getGoalState())
-//		{
-//			return node->pathFromStart();
-//		}
-//		stack.pop();
-//		if (visited.find(node) == visited.end())
-//		{
-//			visited.insert(node);
-//			vector<Node*> adj = mg->getAdj(node);
-//			for (Node* son : adj)
-//			{
-//				son->setCameFrom(node);
-//				stack.push(son);
-//			}
-//		}
-//	}
-//	return NOTFOUND;
-//}
+		double absX = maxX - minX;
+		double absY = maxY - minY;
+		double h = std::max(absX,absY);
+		temp->setHCost(h);
+	}
+}
 
 

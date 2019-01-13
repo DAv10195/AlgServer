@@ -68,29 +68,30 @@ class MatrixGraph : public Searchable<std::string ,Node*>
 		virtual std::vector<Node*> getAdj(Node* n);
 		virtual ~MatrixGraph();
 };
-
+//Comperator to maintaine a min heap.
 struct MyCmp{
 	bool operator() (Node* left, Node* right)
 	{
-		double leftCost = left->getCost();
-		double rightCost = right->getCost();
+		double leftCost = left->getAlgCost();
+		double rightCost = right->getAlgCost();
 		return (leftCost > rightCost);
 	}
 };
+
 typedef struct MyCmp MyCmp;
 
 class MyPriorQueue : public priority_queue <Node* ,std::vector<Node*>, MyCmp>
 {
 	public:
+	// we inherited the c++ priority queue and added some methods.
 		bool contain(Node* node);
 		void remove(Node* nodeToRemove);
 };
+//Implementation of BFS algorithm.
 
 class MyBFS : public Searcher<std::string, Node*, std::string>
 {
 	unsigned int visits;
-
-	virtual void increaseNumOfVisits(){ ++(this->visits); }
 
 	public:
 		MyBFS(){ this->visits = 0; };
@@ -98,16 +99,15 @@ class MyBFS : public Searcher<std::string, Node*, std::string>
 		virtual unsigned int getNumOfVisits() { return this->visits; };
 		virtual ~MyBFS(){};
 };
-
+//Implementation of DFS algorithm.
 class MyDFS : public Searcher<std::string, Node*, std::string>
 {
+	//sets for explored and "half" explored verticies.
 	unsigned int visits;
     std::unordered_set <Node*> black;
     std::unordered_set <Node*> grey;
 
-	virtual void increaseNumOfVisits(){ ++(this->visits); }
-	virtual std::unordered_set<Node*>* getBlack(){ return &(this->black) ;};
-	virtual std::unordered_set<Node*>* getGrey(){ return &(this->grey);};
+    //recursive function for DFS.
 	virtual void recDFS(Searchable<std::string, Node*>* mg, Node* currentNode);
 
 	public:
@@ -116,18 +116,17 @@ class MyDFS : public Searcher<std::string, Node*, std::string>
 		virtual unsigned int getNumOfVisits() { return this->visits; };
 		virtual ~MyDFS(){};
 };
-
+//Implementation of BestFirstSearch algorithm.
 class MyBestFirstSearch : public Searcher<std::string, Node*, std::string>
 {
 
 	MyPriorQueue queue;
 	unsigned int visits;
 
-	virtual void increaseNumOfVisits(){ ++(this->visits); }
-	virtual void addToQueue(Node* node);
-	virtual int getQueueSize();
-	virtual void removeFromQueue(Node * node);
-	virtual bool isContain(Node * node);
+	virtual void addToQueue(Node* node) { this->queue.push(node); };
+	virtual int getQueueSize() { return this->queue.size(); };
+	virtual void removeFromQueue(Node * node){  this->queue.remove(node); }
+	virtual bool isContain(Node * node) { return this->queue.contain(node); };
 	virtual Node* extractMin();
 
 	public:
@@ -136,16 +135,29 @@ class MyBestFirstSearch : public Searcher<std::string, Node*, std::string>
 		virtual unsigned int getNumOfVisits() { return this->visits; };
 		virtual ~MyBestFirstSearch(){};
 };
-
+//Implementation of A* algorithm.
 class MyAstar : public Searcher<std::string, Node*, std::string>
 {
-	unsigned int visits;
+	MyPriorQueue queue;
+	unsigned int visits ;
 
-	public:
-		MyAstar();
-		virtual std::string search(MatrixGraph* mg);
-		virtual unsigned int getNumOfVisits() { return this->visits; };
-		virtual ~MyAstar(){};
+	//private methods regarding the queue and heuristic.
+	virtual void addToQueue(Node* node) { this->queue.push(node); };
+	virtual void removeFromQueue(Node* node) {  this->queue.remove(node); }
+	virtual bool isContain(Node* node) { return this->queue.contain(node); };
+	virtual void setHeuristic(Searchable<std::string, Node*>* mg);
+	virtual MyPriorQueue getQueue() { return this->queue;};
+	virtual Node* extractMin();
+
+public:
+
+	MyAstar() { this->visits=0;}
+	virtual std::string search(Searchable<std::string, Node*>* mg);
+	//get amount of verticies explored.
+	virtual unsigned int getNumOfVisits() { return this->visits; };
+	virtual ~MyAstar(){};
+
+
 };
 
 #endif
