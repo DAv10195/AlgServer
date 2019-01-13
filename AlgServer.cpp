@@ -4,19 +4,20 @@
 #define SUCCESS 1
 #define FAIL 2
 //constructor
-AlgServer :: AlgServer(pthread_t* t, pthread_mutex_t* l)
+MyParallelServer :: MyParallelServer()
 {
-	this->lock = l;
-	this->clieTrd = t;
+	this->lock = new pthread_mutex_t();
+	this->clieTrd = new pthread_t();
 	this->ifRun = true;
 }
 //open method
-bool AlgServer :: open(int port, AlgClientHandler* ch)
+bool MyParallelServer :: open(int port, ClientHandler* ch)
 {	//build params for thread...
 	cliTrdParams* p = new cliTrdParams();
 	p->ifRun = &(this->ifRun);
 	p->lock = this->lock;
 	p->handler = ch;
+	p->port = port;
 	int status = WAIT;
 	int currStat = status;
 	p->status = &status;
@@ -46,7 +47,7 @@ bool AlgServer :: open(int port, AlgClientHandler* ch)
 	return true;
 }
 //stop method
-void AlgServer :: stop()
+void MyParallelServer :: stop()
 {
 	pthread_mutex_lock(this->lock);
 
@@ -55,4 +56,11 @@ void AlgServer :: stop()
 	pthread_mutex_unlock(this->lock);
 
 	pthread_join(*(this->clieTrd), NULL);
+	pthread_mutex_destroy(this->lock);
+}
+//destructor
+MyParallelServer :: ~MyParallelServer()
+{
+	delete this->clieTrd;
+	delete this->lock;
 }

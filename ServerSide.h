@@ -56,11 +56,27 @@ namespace ServerSide
 			}
 			virtual ~CacheManager(){};
 	};
+	//InputStream for ClientHandler
+	class InputStream
+	{
+		public:
+			virtual std::string readFromStream() = 0;
+			virtual ~InputStream(){};
+	};
+	//OutputStream for ClientHandler
+	class OutputStream
+	{
+		public:
+			virtual bool writeToStream(std::string message) = 0;
+			virtual ~OutputStream(){};
+	};
 	//ClientHandler interface
 	class ClientHandler
 	{
 		public:
-			virtual void handleClients() = 0;
+			virtual bool setUp() = 0;
+			virtual void handleClient(InputStream* in, OutputStream* out) = 0;
+			virtual void stop() = 0;
 			virtual ~ClientHandler(){};
 	};
 	//Server interface

@@ -7,48 +7,49 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <queue>
 #include <pthread.h>
+
 #define HANDLERS 5
+#define BUFFER_SIZE 1024
 
 using namespace ServerSide;
-//socket output stream
-class SockOutStream
+//socket output stream suitable for our needs
+class SockOutStream : public OutputStream
 {
 	int sock;
+	char buffer[BUFFER_SIZE];
 
 	public:
 		SockOutStream(int s){ this->sock = s; };
-		virtual void write(std::string);
+		virtual bool writeToStream(std::string message);
 		virtual ~SockOutStream(){};
+};
+//socket input stream suitable for our needs
+class SockInStream : public InputStream
+{
+	int sock;
+	char buffer[BUFFER_SIZE];
+
+	public:
+		SockInStream(int s){ this->sock = s; };
+		virtual std::string readFromStream();
+		virtual ~SockInStream(){};
 };
 //client request data
 struct Request
 {
-	MatrixGraph* graph;
-	SockOutStream* stream;
-	std::string toStr;
-};
-//socket input stream
-class SockInStream
-{
-	int sock;
-
-	public:
-		SockInStream(){ this->sock = 0; };
-		virtual void setSock(int s) { this->sock = s; }
-		virtual Request* read();
-		virtual ~SockInStream(){};
+	InputStream* in;
+	OutputStream* out;
 };
 typedef struct Request Request;
 //an object adapter suitable for our needs
-class MySearchSolver : Solver<Searchable<std::string, Node*>, std::string>
+class MySearchSolver : public Solver<Searchable<std::string, Node*>, std::string>
 {
 	Searcher<std::string, Node*, std::string>* searcher;
 
 	public:
 		MySearchSolver(Searcher<std::string, Node*, std::string>* s) { this->searcher = s; };
-		virtual std::string solve(Searchable<std::string, Node*>* mg) { return (this->searcher)->search(mg); };
+		virtual std::string solve(Searchable<std::string, Node*>* toSolve) { return (this->searcher)->search(toSolve); };
 		~MySearchSolver() { delete this->searcher; };
 };
 //a File cache manager
@@ -64,7 +65,6 @@ class FileCacheManager : public CacheManager<std::string, std::string, std::stri
 struct handleTrdParams
 {
 	pthread_mutex_t* lock;
-	pthread_mutex_t* runLock;
 	Request** toHandle;
 	MySearchSolver* solver;
 	FileCacheManager* manager;
@@ -72,69 +72,52 @@ struct handleTrdParams
 	int* establishment;
 };
 typedef struct handleTrdParams handleTrdParams;
-//acceptThread params
-struct acceptTrdParams
-{
-	pthread_mutex_t* lock;
-	pthread_mutex_t* runLock;
-	std::queue<Request*>* requests;
-	FileCacheManager* manager;
-	bool* ifRun;
-	bool* ifError;
-};
-typedef struct acceptTrdParams acceptTrdParams;
 //a ClientHandler suitable for our needs
-class AlgClientHandler : public ClientHandler
+class MyClientHandler : public ClientHandler
 {
 	FileCacheManager* manager;
 	MySearchSolver* solvers[HANDLERS];
-	MySearchSolver* tmpSolver;
 	pthread_t* handleThreads[HANDLERS];
-	pthread_t* acceptThread;
 	Request* currReq[HANDLERS];
 	int wait[HANDLERS];
+	bool ifRun[HANDLERS];
 	bool ifCreated[HANDLERS];
-	std::queue<Request*> requests;
 	pthread_mutex_t* handleLock;
 
 	public:
-		AlgClientHandler(pthread_mutex_t* hl, pthread_t* ht);
-		virtual std::queue<Request*>* shareClientQueue();
-		virtual FileCacheManager* shareCache();
-		virtual pthread_mutex_t* shareLock();
-		virtual pthread_t* getAcceptThread();
-		virtual void handleClients();
-		virtual bool setUpHandlers(pthread_mutex_t* runLock, bool* ir);
-		virtual void stopHandlers();
-		virtual ~AlgClientHandler();
+		MyClientHandler();
+		virtual void handleClient(InputStream* in, OutputStream* out);
+		virtual bool setUp();
+		virtual void stop();
+		virtual ~MyClientHandler();
 };
 //clientHandlerThread params
 struct cliTrdParams
 {
 	pthread_mutex_t* lock;
-	AlgClientHandler* handler;
+	ClientHandler* handler;
 	bool* ifRun;
 	int* status;
+	int port;
 };
 typedef struct cliTrdParams cliTrdParams;
 //a server suitable for our needs
-class AlgServer : public Server
+class MyParallelServer : public Server
 {
 	pthread_t* clieTrd;
 	pthread_mutex_t* lock;
 	bool ifRun;
 
 	public:
-		AlgServer(pthread_t* t, pthread_mutex_t* l);
-		virtual bool open(int port, AlgClientHandler* ch);
+		MyParallelServer();
+		virtual bool open(int port, ClientHandler* ch);
 		virtual void stop();
-		virtual ~AlgServer(){};
+		virtual ~MyParallelServer();
 };
 //thread responsible for managing requests from clients
 void* clientHandlerThread(void* args);
 //thread responsible for handling a specific client at a given moment
 void* handleThread(void* args);
 //thread responsible for reading data from clients
-void* acceptThread(void* args);
 
 #endif
