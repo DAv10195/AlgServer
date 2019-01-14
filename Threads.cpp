@@ -3,10 +3,10 @@
 #include "sys/socket.h"
 #include "netinet/in.h"
 #include <string.h>
+#include <unistd.h>
 #define WAIT 0
 #define SUCCESS 1
 #define FAIL 2
-#define WALL -1
 #define MAX_CONNECTIONS 5
 //clientHandling Thread
 void* clientHandlerThread(void* args)
@@ -105,6 +105,8 @@ void* clientHandlerThread(void* args)
 		pthread_mutex_unlock(lock);
 	}
 	handler->stop();
+	shutdown(sockfd, SHUT_RDWR);
+	close(sockfd);
 	delete p;
 	return NULL;
 }
@@ -132,6 +134,7 @@ void* handleThread(void* args)
 	}
 	//extract rest of params..
 	bool run = *(p->ifRun);
+	GraphCreator* creator = p->creator;
 	MySearchSolver* solver = p->solver;
 	Request** toHandle = p->toHandle;
 	FileCacheManager* manager = p->manager;
@@ -139,12 +142,8 @@ void* handleThread(void* args)
 	InputStream* in = nullptr;
 	OutputStream* out = nullptr;
 	MatrixGraph* mg = nullptr;
-	std::string solution = "", req = "", row = "", num = "";
-	std::vector<std::string> toParse;
-	unsigned int rows = 0, col = 0, i = 0, j = 0, k = 0, size = 0, max = 0;
-	bool valid = true, existingSolution = false;
-	double** costs = nullptr;
-	Position start, goal;
+	std::string solution = "", req = "";
+	bool existingSolution = false;
 	//start handling the requests the ClientHandler delegates to you
 	while (run)
 	{
@@ -160,238 +159,31 @@ void* handleThread(void* args)
 			out = currReq->out;
 			//construct graph object
 			req = in->readFromStream();
-			//case a reading error occured
-			if (req == "")
-			{
-				delete currReq->in;
-				delete currReq->out;
-				delete currReq;
-				currReq = nullptr;
-				continue;
-			}
-			size = req.size();
-			//get number of rows - '$' sign means end of row, with the two last '$' signs indicating indexes of start and goal
-			for(i = 0; i < size; ++i)
-			{
-				if (req.at(i) == '$')
-				{
-					++rows;
-				}
-			}
-			--rows;
-			--rows;
-			i = 0;
-			while (i < size && req.at(i) != '$')
-			{	//each row has costs separated by ',' and the amount of costs is the amount of ',' + 1
-				//for example: "1,2,3,4" has 4 costs and 3 ','
-				if (req.at(i) == ',')
-				{
-					++col;
-				}
-				++i;
-			}
-			++col;
-			//in any case, we will build a NxN matrix
-			max = std::max(rows, col);
-			//allocation of a NxN matrix of double cost values
-			costs = new double*[max];
-			for (i = 0; j < max; ++i)
-			{
-				costs[i] = new double[max];
-				for (j = 0; j < max; ++j)
-				{
-					costs[i][j] = WALL;
-				}
-			}
-			i = 0;
-			j = 0;
-			//build vector of rows inputed
-			while (j < size && i < rows)
-			{
-				while (j < size && req.at(j) != '$')
-				{
-					row.push_back(req.at(j));
-					++j;
-				}
-				toParse.push_back(row);
-				row = "";
-				++j;
-				++i;
-			}
-			try
-			{
-				//j now pointing on start entry
-				num = "";
-				while (j < size && req.at(j) != ',')
-				{
-					num.push_back(req.at(j));
-					++j;
-				}
-				++j;	//casting to int because stoi returns int and rows and col are >=0 (thus should be unsigned...)
-				if (stoi(num) < 0 || stoi(num) > (int)rows)
-				{	//out of bounds
-					throw std::runtime_error("Invalid Input");
-				}
-				start.i = stoi(num);
-				num = "";
-				//',' between indexes
-				while (j < size && req.at(j) != '$')
-				{
-					num.push_back(req.at(j));
-					++j;
-				}
-				++j;	//casting to int because stoi returns int and rows and col are >=0 (thus should be unsigned...)
-				if (stoi(num) < 0 || stoi(num) > (int)col)
-				{	//out of bounds
-					throw std::runtime_error("Invalid Input");
-				}
-				start.j = stoi(num);
-				num = "";
-				//j now pointing on goal entry
-				while (j < size && req.at(j) != ',')
-				{
-					num.push_back(req.at(j));
-					++j;
-				}
-				++j;	//casting to int because stoi returns int and rows and col are >=0 (thus should be unsigned...)
-				if (stoi(num) < 0 || stoi(num) > (int)rows)
-				{	//out of bounds
-					throw std::runtime_error("Invalid Input");
-				}
-				goal.i = stoi(num);
-				num = "";
-				//',' between indexes
-				while (j < size)
-				{
-					num.push_back(req.at(j));
-					++j;
-				}	//casting to int because stoi returns int and rows and col are >=0 (thus should be unsigned...)
-				if (stoi(num) < 0 || stoi(num) > (int)col)
-				{	//out of bounds
-					throw std::runtime_error("Invalid Input");
-				}
-				goal.j = stoi(num);
-				//parse costs inputed
-				size = toParse.size();
-				j = 0;
-				k = 0;
-				//parse input
-				for (i = 0; i < size; ++i)
-				{
-					row = toParse[i];
-					while (k < row.size() && j < col)
-					{
-						if (row.at(k) == ',')
-						{
-							++k;
-							costs[i][j] = stod(num);
-							//zero cost is invalid
-							if (!costs[i][j])
-							{
-								throw std::runtime_error("Invalid Input");
-							}
-							++j;
-							num = "";
-							continue;
-						}
-						num.push_back(row.at(k));
-						++k;
-					}
-					k = 0;
-					j = 0;
-				}
-				//can't start from a none existing node...
-				if (costs[start.i][start.j] < 0)
-				{
-					throw std::runtime_error("Invalid Input");
-				}
-				//can't go to a none existing node...
-				if (costs[goal.i][goal.j] < 0)
-				{
-					throw std::runtime_error("Invalid Input");
-				}
-			}
-			catch (std::runtime_error &e)
-			{
-				valid = false;
-			}//case parsing failed for invalid input that made stod throw an exception
-			if (!valid)
-			{
-				solution = "Invalid Input!";
-				out->writeToStream(solution);
-				//delete resources...
-				for (i = 0; i < max; ++i)
-				{
-					delete costs[i];
-				}
-				delete costs;
-				delete currReq->in;
-				delete currReq->out;
-				delete currReq;
-				currReq = nullptr;
-				//back to handling state...
-				valid = true;
-				i = 0;
-				j = 0;
-				k = 0;
-				rows = 0;
-				col = 0;
-				row = "";
-				num = "";
-				toParse.clear();
-			}
-			else	//all good!
+			//look if already solved
+			pthread_mutex_lock(lock);
+
+			existingSolution = manager->ifExistingSolution(req);
+
+			pthread_mutex_unlock(lock);
+
+			if (existingSolution)
 			{
 				pthread_mutex_lock(lock);
 
-				existingSolution = manager->ifExistingSolution(req);
+				solution = manager->getSolution(req);
 
 				pthread_mutex_unlock(lock);
 
-				if (existingSolution)
-				{
-					pthread_mutex_lock(lock);
-
-					solution = manager->getSolution(req);
-
-					pthread_mutex_unlock(lock);
-
-					out->writeToStream(solution);
-				}
-				else
-				{	//not existing solution so solve and save
-					mg = new MatrixGraph(start, goal, costs, max);
-					solution = solver->solve(mg);
-					out->writeToStream(solution);
-					//delete resources...
-					delete mg;
-					mg  = nullptr;
-					for (i = 0; i < max; ++i)
-					{
-						delete costs[i];
-					}
-					delete costs;
-					delete currReq->in;
-					delete currReq->out;
-					delete currReq;
-					currReq = nullptr;
-					//back to handling state...
-					i = 0;
-					j = 0;
-					k = 0;
-					rows = 0;
-					col = 0;
-					row = "";
-					num = "";
-					toParse.clear();
-					//save solution
-					pthread_mutex_lock(lock);
-
-					manager->addSolution(req, solution);
-
-					pthread_mutex_unlock(lock);
-				}
+				out->writeToStream(solution);
 			}
+			else	//solve, send, and save solution
+			{
+				solution = "solved";
+				out->writeToStream(solution);
+			}
+			delete in;
+			delete out;
+			delete currReq;
 			//finished handling request...
 			pthread_mutex_lock(lock);
 

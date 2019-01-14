@@ -12,7 +12,13 @@ MyParallelServer :: MyParallelServer()
 }
 //open method
 bool MyParallelServer :: open(int port, ClientHandler* ch)
-{	//build params for thread...
+{
+	if (pthread_mutex_init(this->lock, NULL))
+	{
+		std::cout << "mutex initialization error" << std::endl;
+		return false;
+	}
+	//build params for thread...
 	cliTrdParams* p = new cliTrdParams();
 	p->ifRun = &(this->ifRun);
 	p->lock = this->lock;

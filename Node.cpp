@@ -13,7 +13,7 @@ Node :: Node()
 	this->cameFromDir = "";
 	this->isVisited = false;
 }
-//position constructor (mainly for matrix graphs...
+//position constructor (mainly for matrix graphs...)
 Node :: Node(unsigned int i, unsigned int j) : Node()
 {
 	(this->pos).i = i;

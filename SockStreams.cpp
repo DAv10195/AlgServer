@@ -1,9 +1,10 @@
 //SockStreams implementation
 #include "AlgServer.h"
 #include <string.h>
+#include "sys/socket.h"
 #include <unistd.h>
 //write data to client
-bool SockOutStream :: writeToStream(std::string message)
+bool SockOutStream :: writeToStream(std::string &message)
 {
 	int status = 0;
 	bzero(this->buffer, BUFFER_SIZE);
@@ -16,6 +17,12 @@ bool SockOutStream :: writeToStream(std::string message)
 		return false;
 	}
 	return true;
+}
+//destructor
+SockOutStream :: ~SockOutStream()
+{
+	shutdown(this->sock, SHUT_RDWR);
+	close(this->sock);
 }
 //read data from client, an empty string indicates a reading error
 std::string SockInStream :: readFromStream()

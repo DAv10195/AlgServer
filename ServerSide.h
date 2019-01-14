@@ -11,7 +11,7 @@ namespace ServerSide
 	class Solver
 	{
 		public:
-			virtual S solve(P &problem) = 0;
+			virtual S solve(P problem) = 0;
 			virtual ~Solver(){};
 	};
 	//CacheManager abstract class, L - where to load solutions from (a file stream for example...)
@@ -29,14 +29,14 @@ namespace ServerSide
 		public:
 			virtual void loadSolutions() = 0;
 			virtual void saveSolutions() = 0;
-			virtual void addSolution(P &problem, S &solution)
+			virtual void addSolution(P problem, S solution)
 			{
 				if ((this->solutions).find(problem) == (this->solutions).end())
 				{	//only unsolved problems will be added...
 					this->solutions[problem] = solution;
 				}
 			}
-			virtual bool ifExistingSolution(P &problem)
+			virtual bool ifExistingSolution(P problem)
 			{	//case no solution cached...
 				if ((this->solutions).find(problem) == (this->solutions).end())
 				{
@@ -45,7 +45,7 @@ namespace ServerSide
 				//solution was already cached...
 				return true;
 			}
-			virtual S getSolution(P &problem)
+			virtual S getSolution(P problem)
 			{	//if for some obscure reason a dumb programmer didn't check for existence before usage...
 				if (!this->ifExistingSolution(problem))
 				{
@@ -67,7 +67,7 @@ namespace ServerSide
 	class OutputStream
 	{
 		public:
-			virtual bool writeToStream(std::string message) = 0;
+			virtual bool writeToStream(std::string &message) = 0;
 			virtual ~OutputStream(){};
 	};
 	//ClientHandler interface

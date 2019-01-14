@@ -9,7 +9,7 @@
 #include <string>
 #include <pthread.h>
 
-#define HANDLERS 5
+#define HANDLERS 1
 #define BUFFER_SIZE 1024
 
 using namespace ServerSide;
@@ -21,8 +21,8 @@ class SockOutStream : public OutputStream
 
 	public:
 		SockOutStream(int s){ this->sock = s; };
-		virtual bool writeToStream(std::string message);
-		virtual ~SockOutStream(){};
+		virtual bool writeToStream(std::string &message);
+		virtual ~SockOutStream();
 };
 //socket input stream suitable for our needs
 class SockInStream : public InputStream
@@ -43,14 +43,14 @@ struct Request
 };
 typedef struct Request Request;
 //an object adapter suitable for our needs
-class MySearchSolver : public Solver<Searchable<std::string, Node*>, std::string>
+class MySearchSolver : public Solver<Searchable<std::string, Node*>*, std::string>
 {
 	Searcher<std::string, Node*, std::string>* searcher;
 
 	public:
 		MySearchSolver(Searcher<std::string, Node*, std::string>* s) { this->searcher = s; };
-		virtual std::string solve(Searchable<std::string, Node*>* toSolve) { return (this->searcher)->search(toSolve); };
-		~MySearchSolver() { delete this->searcher; };
+		virtual std::string solve(Searchable<std::string, Node*>* problem) { return (this->searcher)->search(problem); };
+		virtual ~MySearchSolver() { delete this->searcher; };
 };
 //a File cache manager
 class FileCacheManager : public CacheManager<std::string, std::string, std::string>
@@ -66,6 +66,7 @@ struct handleTrdParams
 {
 	pthread_mutex_t* lock;
 	Request** toHandle;
+	GraphCreator* creator;
 	MySearchSolver* solver;
 	FileCacheManager* manager;
 	bool* ifRun;
@@ -76,6 +77,7 @@ typedef struct handleTrdParams handleTrdParams;
 class MyClientHandler : public ClientHandler
 {
 	FileCacheManager* manager;
+	GraphCreator* creators[HANDLERS];
 	MySearchSolver* solvers[HANDLERS];
 	pthread_t* handleThreads[HANDLERS];
 	Request* currReq[HANDLERS];

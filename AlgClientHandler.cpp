@@ -11,7 +11,8 @@ MyClientHandler :: MyClientHandler()
 	for (; i < HANDLERS; ++i)
 	{
 		this->handleThreads[i] = new pthread_t();
-		this->solvers[i] = nullptr;
+		this->creators[i] = new GraphCreator();
+		this->solvers[i] = new MySearchSolver(new MyAstar());
 		this->currReq[i] = nullptr;
 		this->wait[i] = WAIT;
 		this->ifCreated[i] = false;
@@ -25,6 +26,7 @@ bool MyClientHandler :: setUp()
 {
 	bool flag = false;
 	unsigned int i = 0;
+	(this->manager)->loadSolutions();
 	if (pthread_mutex_init(this->handleLock, NULL))
 	{
 		std::cout << "mutex initialization error" << std::endl;
@@ -36,6 +38,7 @@ bool MyClientHandler :: setUp()
 		p->establishment = &(this->wait[i]);
 		p->ifRun = &(this->ifRun[i]);
 		p->lock = this->handleLock;
+		p->creator = this->creators[i];
 		p->solver = this->solvers[i];
 		p->toHandle = &(this->currReq[i]);
 		p->manager = this->manager;
@@ -99,6 +102,7 @@ void MyClientHandler :: handleClient(InputStream* in, OutputStream* out)
 			{
 				this->currReq[i] = req;
 				flag = true;
+				break;
 			}
 
 			pthread_mutex_unlock(this->handleLock);
@@ -130,6 +134,7 @@ MyClientHandler :: ~MyClientHandler()
 	for (; i < HANDLERS; ++i)
 	{
 		delete this->handleThreads[i];
+		delete this->creators[i];
 		delete this->solvers[i];
 	}
 	delete this->manager;

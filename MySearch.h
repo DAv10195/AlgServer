@@ -68,6 +68,14 @@ class MatrixGraph : public Searchable<std::string ,Node*>
 		virtual std::vector<Node*> getAdj(Node* n);
 		virtual ~MatrixGraph();
 };
+//an object Parsing input into a MatrixGraph
+class GraphCreator
+{
+	public:
+		GraphCreator(){};
+		virtual MatrixGraph* create(std::string &s);
+		virtual ~GraphCreator(){};
+};
 //Comperator to maintaine a min heap.
 struct MyCmp{
 	bool operator() (Node* left, Node* right)
