@@ -9,15 +9,14 @@
 #include <string>
 #include <pthread.h>
 
-#define HANDLERS 1
-#define BUFFER_SIZE 1024
+#define HANDLERS 5
+#define BUFFER_SIZE 4096
 
 using namespace ServerSide;
 //socket output stream suitable for our needs
 class SockOutStream : public OutputStream
 {
 	int sock;
-	char buffer[BUFFER_SIZE];
 
 	public:
 		SockOutStream(int s){ this->sock = s; };

@@ -178,8 +178,25 @@ void* handleThread(void* args)
 			}
 			else	//solve, send, and save solution
 			{
-				solution = "solved";
-				out->writeToStream(solution);
+				mg = creator->create(req);
+				//case invalid input
+				if (mg == nullptr)
+				{
+					solution = "Invalid Input";
+					out->writeToStream(solution);
+				}
+				else	//all good!
+				{
+					solution = solver->solve(mg);
+					out->writeToStream(solution);
+					delete mg;
+
+					pthread_mutex_lock(lock);
+
+					manager->addSolution(req, solution);
+
+					pthread_mutex_unlock(lock);
+				}
 			}
 			delete in;
 			delete out;

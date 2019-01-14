@@ -7,10 +7,9 @@
 bool SockOutStream :: writeToStream(std::string &message)
 {
 	int status = 0;
-	bzero(this->buffer, BUFFER_SIZE);
-	strcpy(this->buffer, message.c_str());
 	//send message to client
-	status = write(this->sock, this->buffer, strlen(this->buffer));
+	const char* cMesg = message.c_str();
+	status = write(this->sock, cMesg, strlen(cMesg));
 	if (status < 0)
 	{
 		std::cout << "Error writing to client" << std::endl;
@@ -28,6 +27,7 @@ SockOutStream :: ~SockOutStream()
 std::string SockInStream :: readFromStream()
 {
 	int status = 0;
+	unsigned int i = 0;
 	bool flag = false;
 	std::string toRet = "", line = "";
 	//start reading
@@ -41,7 +41,11 @@ std::string SockInStream :: readFromStream()
 			//empty string indicates error
 			return "";
 		}
-		line = std::string(this->buffer);
+		while (this->buffer[i] && this->buffer[i] != '\n')
+		{
+			line.push_back(this->buffer[i]);
+			++i;
+		}
 		if (line == "end")
 		{
 			flag = true;
@@ -50,6 +54,8 @@ std::string SockInStream :: readFromStream()
 		toRet += line;
 		//'$' indicates end of line
 		toRet += "$";
+		line = "";
+		i = 0;
 	}
 	return toRet;
 }

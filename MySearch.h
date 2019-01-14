@@ -94,6 +94,7 @@ class MyPriorQueue : public priority_queue <Node* ,std::vector<Node*>, MyCmp>
 	// we inherited the c++ priority queue and added some methods.
 		bool contain(Node* node);
 		void remove(Node* nodeToRemove);
+		void removeAll();
 };
 //Implementation of BFS algorithm.
 
@@ -112,8 +113,6 @@ class MyDFS : public Searcher<std::string, Node*, std::string>
 {
 	//sets for explored and "half" explored verticies.
 	unsigned int visits;
-    std::unordered_set <Node*> black;
-    std::unordered_set <Node*> grey;
 
     //recursive function for DFS.
 	virtual void recDFS(Searchable<std::string, Node*>* mg, Node* currentNode);

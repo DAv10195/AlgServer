@@ -12,7 +12,7 @@ MyClientHandler :: MyClientHandler()
 	{
 		this->handleThreads[i] = new pthread_t();
 		this->creators[i] = new GraphCreator();
-		this->solvers[i] = new MySearchSolver(new MyAstar());
+		this->solvers[i] = new MySearchSolver(new MyDFS());
 		this->currReq[i] = nullptr;
 		this->wait[i] = WAIT;
 		this->ifCreated[i] = false;
@@ -102,6 +102,9 @@ void MyClientHandler :: handleClient(InputStream* in, OutputStream* out)
 			{
 				this->currReq[i] = req;
 				flag = true;
+
+				pthread_mutex_unlock(this->handleLock);
+
 				break;
 			}
 

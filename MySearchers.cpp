@@ -6,6 +6,7 @@
 #include <stack>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 using std::priority_queue;
 using std::vector;
 using std::greater;
@@ -27,6 +28,13 @@ void MyPriorQueue::remove(Node* nodeToRemove) {
         std::make_heap(this->c.begin(),this->c.end(), this->comp);
     }
 }
+void MyPriorQueue::removeAll() {
+	while (this->size() > 0)
+	{
+		this->pop();
+	}
+}
+
 
 Node* MyBestFirstSearch:: extractMin()
 { //takes out the best node from the graph, in our case the node with the best cost.
@@ -55,8 +63,10 @@ std::string MyBestFirstSearch :: search(Searchable<std::string, Node*>* mg)
     	Node * current = this->extractMin();
     	this->visits++;
         closedMap.insert(current);
-        if (current == mg->getGoalState())
+        if (current->equals(mg->getGoalState()))
         { //case we find our node.
+            this->visits = 0;
+            this->queue.removeAll();
             return current->pathFromStart();
         }
         vector<Node*> adj = mg->getAdj(current); //extract neighbors.
@@ -82,7 +92,7 @@ std::string MyBestFirstSearch :: search(Searchable<std::string, Node*>* mg)
             }
         }
     }
-
+    this->visits = 0;
     return NOTFOUND;
 }
 
@@ -100,8 +110,14 @@ std::string MyBFS :: search(Searchable<std::string, Node*>* mg)
     	Node * current = queue.front();
     	this->visits++;
     	queue.pop();
-        if (current == mg->getGoalState())
+        if (current->equals(mg->getGoalState()))
         { //case we find our node.
+        	std::cout << "BFS " << this->visits << std::endl;
+            this->visits = 0;
+            while (queue.size() > 0)
+            {
+            	queue.pop();
+            }
             return current->pathFromStart();
         }
         vector<Node*> adj = mg->getAdj(current); //extract neighbors.
@@ -116,6 +132,7 @@ std::string MyBFS :: search(Searchable<std::string, Node*>* mg)
             }
         }
     }
+    this->visits = 0;
     return NOTFOUND; // in case our node was not found.
 }
 
@@ -127,10 +144,12 @@ std::string MyDFS :: search(Searchable<std::string, Node*>* mg)
 	start->setAlgCost(STARTVAL);
 	recDFS(mg,start);
 	std::string answer = mg->getGoalState()->pathFromStart();
-	if (answer == "") //if path was not found (we didnt reach the target node).
+	if (answer == "") //if path was not found (we didn't reach the target node).
 	{
+	    this->visits = 0;
 		return NOTFOUND;
 	}
+    this->visits = 0;
 	return answer;
 }
 
@@ -169,8 +188,10 @@ std::string MyAstar:: search(Searchable<std::string, Node*>* mg)
     	Node * current = this->extractMin();
     	this->visits++;
         closedMap.insert(current);
-        if (current == mg->getGoalState())
+        if (current->equals(mg->getGoalState()))
         { //case we find our node.
+            this->visits = 0;
+            this->queue.removeAll();
             return current->pathFromStart();
         }
         vector<Node*> adj = mg->getAdj(current); //extract neighbors.
@@ -197,7 +218,7 @@ std::string MyAstar:: search(Searchable<std::string, Node*>* mg)
             }
         }
     }
-
+    this->visits = 0;
     return NOTFOUND;
 
 

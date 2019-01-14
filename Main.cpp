@@ -1,22 +1,23 @@
 #include "AlgServer.h"
-#include <unistd.h>
-int main()
+
+int main(int argc, char* argv[])
 {
-	GraphCreator* gc = new GraphCreator();
-	std::string str = "1,1,1,1$1,1,1,1$0,0$1,1$";
-	MatrixGraph* mg = gc->create(str);
 	Server* s = new MyParallelServer();
 	ClientHandler* c = new MyClientHandler();
-	s->open(5694, c);
-	while (true)
+	std::string inp = "";
+	if (!s->open(5677, c))
 	{
-
+		std::cout << "Server opening error" << std::endl;
+		delete c;
+		delete s;
+		return 1;
+	}
+	while (inp != "stop")
+	{
+		std::cin >> inp;
 	}
 	s->stop();
-	delete s;
 	delete c;
+	delete s;
+	return 0;
 }
-
-
-
-

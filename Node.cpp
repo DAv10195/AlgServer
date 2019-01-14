@@ -73,22 +73,22 @@ void Node :: setCameFrom(Node* n)
 	//right
 	if (nI < thisI)
 	{
-		this->cameFromDir = "Right";
+		this->cameFromDir = "Down";
 	}
 	//left
 	if (nI > thisI)
 	{
-		this->cameFromDir = "Left";
+		this->cameFromDir = "Up";
 	}
 	//down
 	if (nJ < thisJ)
 	{
-		this->cameFromDir = "Down";
+		this->cameFromDir = "Right";
 	}
 	//up
 	if (nJ > thisJ)
 	{
-		this->cameFromDir = "Up";
+		this->cameFromDir = "Left";
 	}
 }
 //get the prev Node

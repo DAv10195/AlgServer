@@ -1,6 +1,5 @@
 //MatrixGraph Implementation
 #include "MySearch.h"
-#include <iostream>
 #define WALL -1
 //build Nodes and Node map
 void MatrixGraph :: initNodes(double** costs, unsigned int size)
@@ -219,22 +218,22 @@ MatrixGraph* GraphCreator :: create(std::string &s)
 				}
 				++k;	//update costs matrix
 				costs[i][j] = stod(num);
+				if (!costs[i][j])
+				{	//we're dealing onlu with costs != 0 (every negative cost is a wall...)
+					throw new std::runtime_error("Zero isn't a valid cost");
+				}
 				num = "";
 				++j;
 			}
 			k = 0;
 			j = 0;
 		}
+		if (costs[start.i][start.j] < 0 || costs[goal.i][goal.j] < 0)
+		{	//negative cost means we can't start from or go to that node, because it doesn't exist...
+			throw new std::runtime_error("Can't start from a wall or go to a wall");
+		}
 		toRet = new MatrixGraph(start, goal, costs, max);
 		//delete costs matrix
-		for (i = 0; i < max; ++i)
-		{
-			for (j = 0; j < max; ++j)
-			{
-				std::cout << costs[i][j] << ",";
-			}
-			std::cout << std::endl;
-		}
 		for (i = 0; i < max; ++i)
 		{
 			delete costs[i];
@@ -242,7 +241,7 @@ MatrixGraph* GraphCreator :: create(std::string &s)
 		delete costs;
 		return toRet;
 	}
-	catch (std::runtime_error &e)
+	catch (std::exception &e)
 	{
 		if (costs != nullptr)
 		{
