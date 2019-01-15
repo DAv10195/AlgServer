@@ -108,6 +108,8 @@ class MyParallelServer : public Server
 	pthread_t* clieTrd;
 	pthread_mutex_t* lock;
 	bool ifRun;
+	bool ifStop;
+	bool ifOpen;
 
 	public:
 		MyParallelServer();

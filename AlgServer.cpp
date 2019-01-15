@@ -9,6 +9,8 @@ MyParallelServer :: MyParallelServer()
 	this->lock = new pthread_mutex_t();
 	this->clieTrd = new pthread_t();
 	this->ifRun = true;
+	this->ifStop = false;
+	this->ifOpen = false;
 }
 //open method
 bool MyParallelServer :: open(int port, ClientHandler* ch)
@@ -18,6 +20,7 @@ bool MyParallelServer :: open(int port, ClientHandler* ch)
 		std::cout << "mutex initialization error" << std::endl;
 		return false;
 	}
+	this->ifOpen = true;
 	//build params for thread...
 	cliTrdParams* p = new cliTrdParams();
 	p->ifRun = &(this->ifRun);
@@ -55,18 +58,27 @@ bool MyParallelServer :: open(int port, ClientHandler* ch)
 //stop method
 void MyParallelServer :: stop()
 {
-	pthread_mutex_lock(this->lock);
+	if (this->ifOpen)
+	{
+		this->ifStop = true;
 
-	this->ifRun = false;
+		pthread_mutex_lock(this->lock);
 
-	pthread_mutex_unlock(this->lock);
+		this->ifRun = false;
 
-	pthread_join(*(this->clieTrd), NULL);
-	pthread_mutex_destroy(this->lock);
+		pthread_mutex_unlock(this->lock);
+
+		pthread_join(*(this->clieTrd), NULL);
+		pthread_mutex_destroy(this->lock);
+	}
 }
 //destructor
 MyParallelServer :: ~MyParallelServer()
-{
+{	//case stop method wasn't called...
+	if (!this->ifStop)
+	{
+		this->stop();
+	}
 	delete this->clieTrd;
 	delete this->lock;
 }

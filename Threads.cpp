@@ -17,6 +17,7 @@ void* clientHandlerThread(void* args)
 	pthread_mutex_t* lock = p->lock;
 	int port = p->port, clilen = 0, sockfd = 0, currSock = 0;
 	int* status = p->status;
+	bool firstClient = false;
 	//open socket
 	//structs for storing the connection information.
 	struct sockaddr_in serv_adr, cli_adr;
@@ -104,14 +105,19 @@ void* clientHandlerThread(void* args)
 		}
 
 		handler->handleClient(new SockInStream(currSock), new SockOutStream(currSock));
+		//firstClient has arrived, now we can time our server
+		if (!firstClient)
+		{
+			firstClient = true;
+			// stop waiting for infinity...
+			fcntl(sockfd,F_SETFL,O_NONBLOCK);
+		}
 
 		pthread_mutex_lock(lock);
 
 		run = *(p->ifRun);
 
 		pthread_mutex_unlock(lock);
-		// stop waiting for infinity...
-		fcntl(sockfd,F_SETFL,O_NONBLOCK);
 		// wait a bit, give someone a chance of using this fine server
 		sleep(TIMEOUT);
 	}
