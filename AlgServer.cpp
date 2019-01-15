@@ -20,7 +20,6 @@ bool MyParallelServer :: open(int port, ClientHandler* ch)
 		std::cout << "mutex initialization error" << std::endl;
 		return false;
 	}
-	this->ifOpen = true;
 	//build params for thread...
 	cliTrdParams* p = new cliTrdParams();
 	p->ifRun = &(this->ifRun);
@@ -35,6 +34,7 @@ bool MyParallelServer :: open(int port, ClientHandler* ch)
 	{
 		delete p;
 		std::cout << "Threading Error" << std::endl;
+		pthread_mutex_destroy(this->lock);
 		return false;
 	}
 	//wait for all relevant resources to open
@@ -50,9 +50,11 @@ bool MyParallelServer :: open(int port, ClientHandler* ch)
 	if (currStat == FAIL)
 	{
 		pthread_join(*(this->clieTrd), NULL);
+		pthread_mutex_destroy(this->lock);
 		return false;
 	}
 	//all good!
+	this->ifOpen = true;
 	return true;
 }
 //stop method
