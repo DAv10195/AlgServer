@@ -1,0 +1,15 @@
+Made by David Abramov and Nikita Kogan.
+
+AlgServ is a specific implementation of our Server and Client Handler interfaces (as well as others described in our ServerSide namespace described in the same name header file).
+
+AlgServ is a Server handling various clients (up to 5 actually or to any other number you wish, which is defined as pre-processor define in AlgServer.h, HANDLERS).
+
+The requests given to AlgServ are pathfinding in a graph (more precisley a matrix Graph when you give the start and goal matrix with costs to "step" into defined 
+by the data you are sending to the server at the specific index), which is sent line by line (creating the matrix of costs) by the client.
+
+When running our server using the main supllied by us (for example using our makefile), it expects a command line argument indicating the port number the server will be
+opened on (in our makefile's run target we pass 5400). After that point, the server will wait infinitly for the first client, and there after wait for a client no longer
+than the defined time in seconds given as a pre-processor define in Threads.cpp file (currently defined to 1 second).
+
+In any case, the server will wait for you to call the stop method, and you can do this by inputing "stop" (the main function waits for this input to call the stop method
+and end the entire process, even if a timeout is generated).

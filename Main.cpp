@@ -2,12 +2,26 @@
 
 int main(int argc, char* argv[])
 {
+	int port = 0;
+	if (argc == 1)
+	{
+		std::cout << "Not enough paramaters passed (give me a port!)" << std::endl;
+		return 1;
+	}
+	try
+	{
+		port = std::stoi(argv[1]);
+	}
+	catch (std::invalid_argument &e)
+	{
+		std::cout << "Invalid argument passed as port" << std::endl;
+		return 1;
+	}
 	Server* s = new MyParallelServer();
 	ClientHandler* c = new MyClientHandler();
 	std::string inp = "";
-	if (!s->open(5677, c))
+	if (!s->open(port, c))
 	{
-		std::cout << "Server opening error" << std::endl;
 		delete c;
 		delete s;
 		return 1;

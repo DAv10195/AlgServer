@@ -4,10 +4,12 @@
 #include "netinet/in.h"
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #define WAIT 0
 #define SUCCESS 1
 #define FAIL 2
 #define MAX_CONNECTIONS 5
+#define TIMEOUT 1
 //clientHandling Thread
 void* clientHandlerThread(void* args)
 {	//extract params...
@@ -92,8 +94,13 @@ void* clientHandlerThread(void* args)
 		// Accept actual connection from the client.
 		currSock = accept(sockfd, (struct sockaddr *)&cli_adr, (socklen_t*)&clilen);
 		if (currSock < 0)
-		{
-			std::cout << "Error accepting client connection" << std::endl;
+		{	//no one so fast...
+			std::cout << "Server Timed out" << std::endl;
+			handler->stop();
+			shutdown(sockfd, SHUT_RDWR);
+			close(sockfd);
+			delete p;
+			return NULL;
 		}
 
 		handler->handleClient(new SockInStream(currSock), new SockOutStream(currSock));
@@ -103,6 +110,10 @@ void* clientHandlerThread(void* args)
 		run = *(p->ifRun);
 
 		pthread_mutex_unlock(lock);
+		// stop waiting for infinity...
+		fcntl(sockfd,F_SETFL,O_NONBLOCK);
+		// wait a bit, give someone a chance of using this fine server
+		sleep(TIMEOUT);
 	}
 	handler->stop();
 	shutdown(sockfd, SHUT_RDWR);

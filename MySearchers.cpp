@@ -112,7 +112,6 @@ std::string MyBFS :: search(Searchable<std::string, Node*>* mg)
     	queue.pop();
         if (current->equals(mg->getGoalState()))
         { //case we find our node.
-        	std::cout << "BFS " << this->visits << std::endl;
             this->visits = 0;
             while (queue.size() > 0)
             {
