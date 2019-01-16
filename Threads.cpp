@@ -95,13 +95,18 @@ void* clientHandlerThread(void* args)
 		// Accept actual connection from the client.
 		currSock = accept(sockfd, (struct sockaddr *)&cli_adr, (socklen_t*)&clilen);
 		if (currSock < 0)
-		{	//no one so fast...
-			std::cout << "Server Timed out" << std::endl;
-			handler->stop();
-			shutdown(sockfd, SHUT_RDWR);
-			close(sockfd);
-			delete p;
-			return NULL;
+		{	// wait a bit, give someone a chance of using this fine server
+			sleep(TIMEOUT);
+			currSock = accept(sockfd, (struct sockaddr *)&cli_adr, (socklen_t*)&clilen);
+			if (currSock < 0)
+			{	//no one so fast...
+				handler->stop();
+				shutdown(sockfd, SHUT_RDWR);
+				close(sockfd);
+				delete p;
+				std::cout << "Server timed out" << std::endl;
+				return NULL;
+			}
 		}
 
 		handler->handleClient(new SockInStream(currSock), new SockOutStream(currSock));
@@ -118,8 +123,6 @@ void* clientHandlerThread(void* args)
 		run = *(p->ifRun);
 
 		pthread_mutex_unlock(lock);
-		// wait a bit, give someone a chance of using this fine server
-		sleep(TIMEOUT);
 	}
 	handler->stop();
 	shutdown(sockfd, SHUT_RDWR);
